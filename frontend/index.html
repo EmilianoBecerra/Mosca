@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mosca</title>
+    <link rel="stylesheet" href="./style.css">
     <script src="http://localhost:3000/socket.io/socket.io.js"></script>
     <script src="./index.js" defer></script>
 </head>
@@ -14,11 +15,19 @@
         <h1>La Mosca</h1>
     </header>
     <main>
-        <form action="" id="form">
+        <form action="" id="form" class="form" style="display: flex;">
             <input type="text" id="input">
-            <button type="submit">Registrate</button>
+            <button type="submit">Crear Mesa</button>
         </form>
+        <div id="mesa-espera" class="mesa-espera" style="display: none;">
+            <p id="id-mesa"></p>
+            <p id="nombre-creador"></p>
+            <button>Listo</button>
+        </div>
     </main>
+    <footer>
+        Desarrollado por Emiliano Becerra.
+    </footer>
 </body>
 
 </html>

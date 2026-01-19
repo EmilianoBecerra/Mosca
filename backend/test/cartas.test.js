@@ -1,6 +1,6 @@
 const test = require("node:test");
 const assert = require("node:assert");
-const { crearMazo, mezclarMazo, repartirCartas, descartarCartas, repartirPostDescarte } = require("./cartas.js");
+const { crearMazo, mezclarMazo, repartirCartas, descartarCartas, repartirPostDescarte } = require("../utils/cartas.js");
 
 test("crearMazo devuelve 48 cartas", () => {
     const mazo = crearMazo();
