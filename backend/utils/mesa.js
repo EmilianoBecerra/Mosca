@@ -29,6 +29,44 @@ function crearMesa(idCreador, nombreCreador) {
 }
 
 
+
+function enviarMesasDisponibles(mesas) {
+    const arrayMesas = Object.values(mesas);
+    const arrayMesasDisponibles = arrayMesas.filter(m => m.jugadores.length < 6);
+    const infoMesas = []
+    for (const mesa of arrayMesasDisponibles) {
+        const id = mesa.id;
+        const nombreCreador = mesa.jugadores[0].nombre;
+        const jugadores = mesa.jugadores.length;
+        const info = { id, nombreCreador, jugadores };
+        infoMesas.push(info);
+    }
+
+    return infoMesas;
+}
+
+
+function agregarNuevoUsuario(idMesa, nombre, mesas, idJugador) {
+    const mesa = mesas[idMesa];
+    if (!mesa || mesa.jugadores.length >= 6) {
+        return null;
+    }
+    const jugador = {
+        idJugador: idJugador,
+        nombre: nombre,
+        enPartida: true,
+        cartas: [],
+        idMesa: idMesa,
+        posicionMesa: mesa.jugadores.length,
+        puntos: 20,
+        listoParaSiguienteFase: false,
+        ready: false
+    };
+
+    mesa.jugadores.push(jugador);
+    return jugador.nombre;
+}
+
 /* const mesa = {
     id: "mesa-1",
     jugadores: [{
@@ -53,4 +91,4 @@ function crearMesa(idCreador, nombreCreador) {
 } */
 
 
-module.exports = { crearMesa }
+module.exports = { crearMesa, enviarMesasDisponibles, agregarNuevoUsuario}

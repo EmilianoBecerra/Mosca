@@ -26,16 +26,16 @@ function repartirCartas(mesa) {
     const numeroJugadores = mesa.jugadores.length;
     let triunfo;
     const mazo = mesa.mazo;
+    mesa.jugadores.forEach(j => j.cartas = []);
     for (let c = 0; c < 5; c++) {
         for (let i = 0; i < numeroJugadores; i++) {
-            const posicionJugador = (mesa.repartidor + 1 + i) % numeroJugadores;
             const carta = mazo.pop();
-            mesa.jugadores[posicionJugador].cartas.push(carta);
+            mesa.jugadores[i].cartas.push(carta);
         }
     }
     const cartasRepartidor = mesa.jugadores[mesa.repartidor].cartas;
-    triunfo = cartasRepartidor[cartasRepartidor.length - 1];
-    mesa.triunfo = triunfo.palo;
+    triunfo = cartasRepartidor[cartasRepartidor.length - 1].palo;
+    mesa.triunfo = triunfo;
 }
 
 function descartarCartas(mesa, arrayJugadores) {
@@ -67,4 +67,4 @@ function repartirPostDescarte(mesa) {
     }
 }
 
-module.exports = { crearMazo, mezclarMazo, repartirCartas,descartarCartas, repartirPostDescarte };
+module.exports = { crearMazo, mezclarMazo, repartirCartas, descartarCartas, repartirPostDescarte };
