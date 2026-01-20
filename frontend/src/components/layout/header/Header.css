@@ -1,0 +1,26 @@
+header {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.nav-list {
+    width: 50%;
+}
+
+.ul-header {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.ul-header li {
+    width: 200px;
+    text-align: center;
+    margin: 5px;
+    border: 1px solid rgb(185, 185, 255);
+    border-radius: 5px;
+    padding: 5px;
+}
