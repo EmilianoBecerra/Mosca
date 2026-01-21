@@ -9,7 +9,7 @@ const app = express();
 const server = createServer(app);
 const io = new Server(server, {
     cors: {
-        origin: "http://127.0.0.1:5500",
+        origin: "http://localhost:5173",
     }
 });
 
@@ -19,23 +19,19 @@ app.get("/", (req, res) => {
 
 const mesas = {};
 
-
-
-
 io.on("connection", (socket) => {
     socket.emit("mesas-disponibles", enviarMesasDisponibles(mesas));
-    socket.on("crear-mesa", (nombre) => {
-        const nuevaMesa = crearMesa(socket.id, nombre);
+    socket.on("crear-mesa", (nombre, nombreMesa) => {
+        const nuevaMesa = crearMesa(socket.id, nombre, nombreMesa);
         mesas[nuevaMesa.id] = nuevaMesa;
         socket.join(nuevaMesa.id);
         socket.emit("crear-mesa", nuevaMesa);
         io.emit("mesas-disponibles", enviarMesasDisponibles(mesas));
     })
 
-
     socket.on("unirse-mesa", ({ idMesa, nombre }) => {
         const jugador = agregarNuevoUsuario(idMesa, nombre, mesas, socket.id);
-
+        
         if (!jugador) {
             socket.emit("error", "No se pudo unir a la mesa");
             return;

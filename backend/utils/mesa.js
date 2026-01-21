@@ -1,8 +1,9 @@
 
-function crearMesa(idCreador, nombreCreador) {
+function crearMesa(idCreador, nombreCreador, nombreMesa) {
     const idMesa = Date.now() + "-" + idCreador;
     const mesa = {
         id: idMesa,
+        nombre: nombreMesa,
         jugadores: [
             {
                 idJugador: idCreador,
@@ -38,7 +39,8 @@ function enviarMesasDisponibles(mesas) {
         const id = mesa.id;
         const nombreCreador = mesa.jugadores[0].nombre;
         const jugadores = mesa.jugadores.length;
-        const info = { id, nombreCreador, jugadores };
+        const nombre = mesa.nombre;
+        const info = { id, nombreCreador, jugadores, nombre };
         infoMesas.push(info);
     }
 
@@ -91,4 +93,4 @@ function agregarNuevoUsuario(idMesa, nombre, mesas, idJugador) {
 } */
 
 
-module.exports = { crearMesa, enviarMesasDisponibles, agregarNuevoUsuario}
+module.exports = { crearMesa, enviarMesasDisponibles, agregarNuevoUsuario }
