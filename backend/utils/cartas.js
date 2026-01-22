@@ -38,6 +38,7 @@ function repartirCartas(mesa) {
     mesa.triunfo = triunfo;
 }
 
+
 function descartarCartas(mesa, arrayJugadores) {
     const jugadores = mesa.jugadores;
     for (const jugador of jugadores) /* Jugador del array jugadores en la mesa */ {
@@ -45,6 +46,7 @@ function descartarCartas(mesa, arrayJugadores) {
         if (!jugadorEncontrado) {
             continue; /* Si no se encuentra jugador, pasa al siguiente */
         }
+        /* determina cartas seleccionadas .indices propiedad de objeto que envia el front */
         const indiceCartasADescartar = jugadorEncontrado.indices;
         const cartasRestantes = jugador.cartas.filter((_, i) => !indiceCartasADescartar.includes(i));
         jugador.cartas = cartasRestantes;
@@ -66,5 +68,7 @@ function repartirPostDescarte(mesa) {
         }
     }
 }
+
+
 
 module.exports = { crearMazo, mezclarMazo, repartirCartas, descartarCartas, repartirPostDescarte };

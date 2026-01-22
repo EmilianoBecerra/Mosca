@@ -2,52 +2,111 @@ import { useContext, useState } from "react";
 import "./Lobby.css";
 import { GlobalContext } from "../../../../context/GlobalContext";
 import { Buttons } from "../../../parts/Buttons";
-import { useEffect } from "react";
-
 
 export function Lobby() {
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(false);
-    const { mesas, setEstadoPantalla, setMesaId, nombreJugador, setNombreJugador } = useContext(GlobalContext);
+    const { mesas, unirseMesa, nombreJugador, setNombreJugador, setEstadoPantalla } = useContext(GlobalContext);
+    const [nombreInput, setNombreInput] = useState(nombreJugador || "");
+    const [mostrarModal, setMostrarModal] = useState(false);
+    const [mesaSeleccionada, setMesaSeleccionada] = useState(null);
 
     const handleClick = (mesa) => {
-        if (nombreJugador) {
-            setMesaId(mesa.id);
-            setEstadoPantalla("mesa");
-        } else {
-            const nombre = prompt("Escribi tu nombre de jugador");
-            console.log(nombre);
-            setNombreJugador(nombre);
-            setMesaId(mesa.id);
-            setEstadoPantalla("mesa");
+        if (!nombreJugador) {
+            setMesaSeleccionada(mesa);
+            setMostrarModal(true);
+            return;
         }
-    }
+        unirseMesa(mesa.id, nombreJugador);
+    };
+
+    const handleConfirmarNombre = (e) => {
+        e.preventDefault();
+        if (!nombreInput.trim()) return;
+        setNombreJugador(nombreInput.trim());
+        setMostrarModal(false);
+        if (mesaSeleccionada) {
+            unirseMesa(mesaSeleccionada.id, nombreInput.trim());
+        }
+    };
+
     return (
         <div className="lobby">
-            <h2>Mesas disponibles</h2>
-            {
-                mesas.length < 1 ?
-                    <p className="sin-mesas">No hay mesas disponibles</p> :
-                    <div className="sala">
-                        {
-                            mesas.map((mesa) => {
-                                return (
-                                    <div className="lista-mesas" key={mesa.id}>
-                                        <p>Nombre Mesa </p>
-                                        <p className="info">{mesa.nombre ? mesa.nombre : " -"} </p>
-                                        <p>Nombre creador </p>
-                                        <p className="info"> {mesa.nombreCreador ? mesa.nombreCreador : "-"}</p>
-                                        <p>Numeros de Jugadores </p>
-                                        <p className="info"> {mesa.jugadores ? `${mesa.jugadores}/6 ` : "-"}</p>
-                                        <Buttons type={"button"} label={"Ingresar"} onClick={() => handleClick(mesa)} />
-                                    </div>
-                                )
-                            })
-                        }
+            <div className="lobby-header">
+                <h2>Mesas Disponibles</h2>
+                <button
+                    className="btn-crear-mesa"
+                    onClick={() => setEstadoPantalla("crear-mesa")}
+                >
+                    + Crear Mesa
+                </button>
+            </div>
 
+            {mesas.length < 1 ? (
+                <div className="sin-mesas">
+                    <div className="sin-mesas-icon">🃏</div>
+                    <h3>No hay mesas disponibles</h3>
+                    <p>Crea una mesa nueva para comenzar a jugar</p>
+                    <Buttons
+                        label="Crear Mesa"
+                        onClick={() => setEstadoPantalla("crear-mesa")}
+                    />
+                </div>
+            ) : (
+                <div className="sala">
+                    {mesas.map((mesa) => (
+                        <div className="mesa-card" key={mesa.id}>
+                            <div className="mesa-card-header">
+                                <span className="mesa-nombre">{mesa.nombre || "Sin nombre"}</span>
+                                <span className={`jugadores-badge ${mesa.jugadores >= 6 ? 'llena' : ''}`}>
+                                    {mesa.jugadores}/6
+                                </span>
+                            </div>
+                            <div className="mesa-card-body">
+                                <div className="mesa-info-row">
+                                    <span className="label">Creador:</span>
+                                    <span className="value">{mesa.nombreCreador || "Anonimo"}</span>
+                                </div>
+                                <div className="mesa-progress">
+                                    <div
+                                        className="mesa-progress-bar"
+                                        style={{ width: `${(mesa.jugadores / 6) * 100}%` }}
+                                    />
+                                </div>
+                            </div>
+                            <Buttons
+                                type="button"
+                                label={mesa.jugadores >= 6 ? "Mesa Llena" : "Unirse"}
+                                onClick={() => handleClick(mesa)}
+                                disabled={mesa.jugadores >= 6}
+                            />
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            {mostrarModal && (
+                <div className="modal-overlay" onClick={() => setMostrarModal(false)}>
+                    <div className="modal" onClick={e => e.stopPropagation()}>
+                        <h3>Ingresa tu nombre</h3>
+                        <form onSubmit={handleConfirmarNombre}>
+                            <input
+                                type="text"
+                                value={nombreInput}
+                                onChange={(e) => setNombreInput(e.target.value)}
+                                placeholder="Tu nombre de jugador"
+                                maxLength={20}
+                                minLength={2}
+                                autoFocus
+                            />
+                            <div className="modal-actions">
+                                <button type="button" className="btn-cancelar" onClick={() => setMostrarModal(false)}>
+                                    Cancelar
+                                </button>
+                                <Buttons type="submit" label="Confirmar" />
+                            </div>
+                        </form>
                     </div>
-
-            }
+                </div>
+            )}
         </div>
-    )
+    );
 }

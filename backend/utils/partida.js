@@ -21,4 +21,24 @@ function determinarGanador(cartasJugadas, triunfo) {
     }
 }
 
-module.exports = { obtenerFuerza, determinarGanador }
+
+function jugarCarta(jugador, carta, mesa) {
+    const indiceCarta = jugador.cartas.findIndex(c => c.palo === carta.palo && c.numero === carta.numero);
+
+    if (indiceCarta === -1) return;
+
+    jugador.cartas.splice(indiceCarta, 1);
+    mesa.cartasPorRonda.push({ id: jugador.idJugador, carta });
+
+    const numJugadores = mesa.jugadores.length;
+
+    if (mesa.cartasPorRonda.length < numJugadores) {
+        mesa.turno++;
+    } else {
+        mesa.turno = 0;
+        mesa.estado = "determinar-ganador";
+    }
+}
+
+
+module.exports = { obtenerFuerza, determinarGanador, jugarCarta }

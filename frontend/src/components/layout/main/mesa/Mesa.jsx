@@ -1,41 +1,13 @@
-import { useContext, useState, useEffect } from "react";
+import { useContext } from "react";
 import "./Mesa.css";
 import { GlobalContext } from "../../../../context/GlobalContext";
 import { Buttons } from "../../../parts/Buttons";
 
-export function Mesa({ id }) {
-    const { socket, nombreJugador, setEstadoPantalla } = useContext(GlobalContext);
-    const [mesa, setMesa] = useState(null);
-    const [miJugador, setMiJugador] = useState(null);
-
-    useEffect(() => {
-        socket.emit("unirse-mesa", { idMesa: id, nombre: nombreJugador });
-
-        socket.on("confirmacion-ingreso", (datosMesa) => {
-            setMesa(datosMesa);
-            const yo = datosMesa.jugadores.find(j => j.nombre === nombreJugador);
-            setMiJugador(yo);
-        });
-
-        socket.on("actualizar-mesa", (datosMesa) => {
-            setMesa(datosMesa);
-            const yo = datosMesa.jugadores.find(j => j.nombre === nombreJugador);
-            setMiJugador(yo);
-        });
-
-        socket.on("iniciar-partida", (datosMesa) => {
-            setMesa(datosMesa);
-        });
-
-        return () => {
-            socket.off("confirmacion-ingreso");
-            socket.off("actualizar-mesa");
-            socket.off("iniciar-partida");
-        }
-    }, []);
+export function Mesa() {
+    const { mesa, nombreJugador, jugadorListo, setEstadoPantalla } = useContext(GlobalContext);
 
     const handleListo = () => {
-        socket.emit("jugador-listo", id);
+        jugadorListo();
     };
 
     const handleSalir = () => {
@@ -51,88 +23,97 @@ export function Mesa({ id }) {
         );
     }
 
+    const miJugador = mesa.jugadores.find(j => j.nombre === nombreJugador);
     const jugadoresListos = mesa.jugadores.filter(j => j.ready).length;
     const totalJugadores = mesa.jugadores.length;
     const puedeIniciar = totalJugadores >= 2;
+    const todosListos = jugadoresListos === totalJugadores && puedeIniciar;
 
-    // Vista de partida en curso
-    if (mesa.estado === "en-partida") {
-        return (
-            <div className="mesa partida">
-                <div className="partida-header">
-                    <h2>{mesa.nombre}</h2>
-                    <span className="triunfo-badge">Triunfo: {mesa.triunfo}</span>
-                </div>
-
-                <div className="mis-cartas">
-                    <h3>Mis cartas</h3>
-                    <div className="cartas-container">
-                        {miJugador?.cartas?.map((carta, index) => (
-                            <div key={index} className={`carta ${carta.palo}`}>
-                                <span className="carta-numero">{carta.numero}</span>
-                                <span className="carta-palo">{carta.palo}</span>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-
-                <div className="jugadores-partida">
-                    {mesa.jugadores.map((jugador) => (
-                        <div key={jugador.idJugador} className={`jugador-partida ${jugador.nombre === nombreJugador ? 'yo' : ''}`}>
-                            <span className="jugador-nombre">{jugador.nombre}</span>
-                            <span className="jugador-puntos">{jugador.puntos} pts</span>
-                        </div>
-                    ))}
-                </div>
-            </div>
-        );
-    }
-
-    // Vista de sala de espera
     return (
         <div className="mesa sala-espera">
             <div className="mesa-header">
-                <h2>{mesa.nombre}</h2>
-                <span className="estado-badge">Esperando jugadores</span>
+                <div className="mesa-titulo">
+                    <h2>{mesa.nombre}</h2>
+                    <span className="mesa-id">ID: {mesa.id?.slice(0, 8)}...</span>
+                </div>
+                <div className={`estado-badge ${todosListos ? 'iniciando' : ''}`}>
+                    {todosListos ? 'Iniciando partida...' : 'Esperando jugadores'}
+                </div>
             </div>
 
             <div className="jugadores-info">
-                <span className="contador">{totalJugadores}/6 jugadores</span>
-                <span className="listos">{jugadoresListos} listos</span>
+                <div className="info-item">
+                    <span className="info-value">{totalJugadores}/6</span>
+                    <span className="info-label">Jugadores</span>
+                </div>
+                <div className="info-divider"></div>
+                <div className="info-item">
+                    <span className="info-value">{jugadoresListos}/{totalJugadores}</span>
+                    <span className="info-label">Listos</span>
+                </div>
             </div>
 
-            <div className="jugadores-lista">
-                {mesa.jugadores.map((jugador) => (
-                    <div key={jugador.idJugador} className={`jugador-card ${jugador.nombre === nombreJugador ? 'yo' : ''}`}>
-                        <div className="jugador-info">
-                            <span className="jugador-nombre">{jugador.nombre}</span>
-                            {jugador.posicionMesa === 0 && <span className="host-badge">Host</span>}
+            <div className="jugadores-grid">
+                {mesa.jugadores.map((jugador, index) => {
+                    const esYo = jugador.nombre === nombreJugador;
+                    return (
+                        <div
+                            key={jugador.idJugador}
+                            className={`jugador-slot ${esYo ? 'yo' : ''} ${jugador.ready ? 'listo' : ''}`}
+                        >
+                            <div className="jugador-avatar">
+                                <span className="avatar-emoji">
+                                    {esYo ? '😎' : '👤'}
+                                </span>
+                                {jugador.ready && (
+                                    <span className="check-mark">✓</span>
+                                )}
+                            </div>
+                            <div className="jugador-details">
+                                <span className="jugador-nombre">
+                                    {jugador.nombre}
+                                    {esYo && <span className="tu-badge">(Tu)</span>}
+                                </span>
+                                <div className="jugador-tags">
+                                    {jugador.posicionMesa === 0 && (
+                                        <span className="host-badge">Host</span>
+                                    )}
+                                    <span className={`estado-tag ${jugador.ready ? 'listo' : 'esperando'}`}>
+                                        {jugador.ready ? 'Listo' : 'Esperando'}
+                                    </span>
+                                </div>
+                            </div>
                         </div>
-                        <span className={`estado ${jugador.ready ? 'listo' : 'esperando'}`}>
-                            {jugador.ready ? 'Listo' : 'Esperando'}
-                        </span>
-                    </div>
-                ))}
+                    );
+                })}
 
-                {/* Espacios vacios */}
                 {Array.from({ length: 6 - totalJugadores }).map((_, i) => (
-                    <div key={`empty-${i}`} className="jugador-card vacio">
-                        <span className="jugador-nombre">Esperando jugador...</span>
+                    <div key={`empty-${i}`} className="jugador-slot vacio">
+                        <div className="jugador-avatar vacio">
+                            <span className="avatar-emoji">?</span>
+                        </div>
+                        <span className="jugador-nombre">Esperando...</span>
                     </div>
                 ))}
             </div>
 
             {!puedeIniciar && (
-                <p className="mensaje-minimo">Se necesitan al menos 2 jugadores para iniciar</p>
+                <div className="mensaje-minimo">
+                    <span className="warning-icon">⚠️</span>
+                    Se necesitan al menos 2 jugadores para iniciar la partida
+                </div>
             )}
 
             <div className="mesa-actions">
                 <Buttons
                     type="button"
-                    label={miJugador?.ready ? "Listo!" : "Estoy listo"}
+                    label={miJugador?.ready ? "¡Listo!" : "Estoy listo"}
                     onClick={handleListo}
+                    disabled={miJugador?.ready}
                 />
-                <button className="btn-salir" onClick={handleSalir}>Salir de la mesa</button>
+                <button className="btn-salir" onClick={handleSalir}>
+                    Salir de la mesa
+                </button>
             </div>
         </div>
     );

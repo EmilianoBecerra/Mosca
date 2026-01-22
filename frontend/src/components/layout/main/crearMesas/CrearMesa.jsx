@@ -5,14 +5,14 @@ import { Buttons } from "../../../parts/Buttons";
 import { InputCrearMesa } from "../../../parts/inputs/InputCrearMesa";
 
 export function CrearMesa() {
-    const { socket, setEstadoPantalla } = useContext(GlobalContext);
+    const { crearMesa } = useContext(GlobalContext);
     const [nombre, setNombre] = useState("");
     const [nombreMesa, setNombreMesa] = useState("");
 
     const handleCrear = (e) => {
         e.preventDefault();
-        socket.emit("crear-mesa", nombre, nombreMesa);
-        setEstadoPantalla("lobby");
+        crearMesa(nombre, nombreMesa);
+        // setEstadoPantalla("lobby"); // No es necesario volver al lobby, el evento crear-mesa redirige a la mesa
     }
 
     return (

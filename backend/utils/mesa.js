@@ -4,6 +4,7 @@ function crearMesa(idCreador, nombreCreador, nombreMesa) {
     const mesa = {
         id: idMesa,
         nombre: nombreMesa,
+        cartasPorRonda: [/* recibir {numero:1, palo: basto} */],
         jugadores: [
             {
                 idJugador: idCreador,
@@ -29,8 +30,6 @@ function crearMesa(idCreador, nombreCreador, nombreMesa) {
     return mesa;
 }
 
-
-
 function enviarMesasDisponibles(mesas) {
     const arrayMesas = Object.values(mesas);
     const arrayMesasDisponibles = arrayMesas.filter(m => m.jugadores.length < 6);
@@ -47,12 +46,16 @@ function enviarMesasDisponibles(mesas) {
     return infoMesas;
 }
 
-
 function agregarNuevoUsuario(idMesa, nombre, mesas, idJugador) {
     const mesa = mesas[idMesa];
     if (!mesa || mesa.jugadores.length >= 6) {
         return null;
     }
+    const existe = mesa.jugadores.find(j => j.idJugador === idJugador || j.nombre === nombre);
+    if (existe) {
+        return "jugador-en-la-mesa";
+    }
+
     const jugador = {
         idJugador: idJugador,
         nombre: nombre,
@@ -68,29 +71,5 @@ function agregarNuevoUsuario(idMesa, nombre, mesas, idJugador) {
     mesa.jugadores.push(jugador);
     return jugador.nombre;
 }
-
-/* const mesa = {
-    id: "mesa-1",
-    jugadores: [{
-        idJugador: "socket.id",
-        nombre: "pepe",
-        enPartida: true,
-        cartas: [],
-        idMesa: "mesa-1",
-        posicionMesa: 0,
-        puntos: 15,
-        listoParaSiguienteFase: false,
-        ready: false,
-    }
-    ],
-    mazo: [],
-    triunfo: "solamente el palo que sea el triunfo",
-    estado: "llena",
-    ronda: 0,
-    fase: "esperando-jugadores-ready",
-    turnoActual: 0,
-    repartidor: 0
-} */
-
 
 module.exports = { crearMesa, enviarMesasDisponibles, agregarNuevoUsuario }
