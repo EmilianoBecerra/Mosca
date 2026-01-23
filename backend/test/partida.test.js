@@ -3,10 +3,10 @@ const assert = require("node:assert");
 const { determinarGanador } = require("../utils/partida.js")
 
 const cartasJugadas = [
-    { idJugador: 0, carta: { palo: "espada", numero: 1 } },
-    { idJugador: 1, carta: { palo: "copa", numero: 3 } },
-    { idJugador: 2, carta: { palo: "copa", numero: 1 } },
-    { idJugador: 3, carta: { palo: "espada", numero: 7 } },
+    { id: 0, carta: { palo: "espada", numero: 1 } },
+    { id: 1, carta: { palo: "copa", numero: 3 } },
+    { id: 2, carta: { palo: "copa", numero: 1 } },
+    { id: 3, carta: { palo: "espada", numero: 7 } },
 ]
 
 const triunfo = "oro";

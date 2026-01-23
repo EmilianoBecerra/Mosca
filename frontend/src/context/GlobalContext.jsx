@@ -1,127 +1,192 @@
-import { createContext, useEffect, useState } from "react";
+import { createContext, useEffect, useState, useRef } from "react";
 import { io } from "socket.io-client";
-
 
 export const GlobalContext = createContext(null);
 
-const socket = io("http://localhost:3000");
+// Función para generar UUID simple
+const generarUUID = () => {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+        const r = Math.random() * 16 | 0;
+        const v = c === 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+    });
+};
+
+// Función para crear socket con o sin auth
+const crearSocket = () => {
+    const odId = localStorage.getItem("odId");
+    const nombre = localStorage.getItem("nombreJugador");
+
+    // Si tenemos datos guardados, conectamos con auth
+    if (odId && nombre) {
+        return io("http://localhost:3000", {
+            auth: { odId, nombre }
+        });
+    }
+
+    // Si no, conectamos sin auth
+    return io("http://localhost:3000");
+};
 
 export const GlobalContextProvider = (props) => {
+    // useRef para mantener el socket (puede cambiar al reconectar)
+    const socketRef = useRef(crearSocket());
+
     const [mesas, setMesas] = useState([]);
     const [mesa, setMesa] = useState(null);
     const [estadoPantalla, setEstadoPantalla] = useState("lobby");
     const [mesaId, setMesaId] = useState("");
-    const [nombreJugador, setNombreJugador] = useState("");
+    const [nombreJugador, setNombreJugador] = useState(() => {
+        return localStorage.getItem("nombreJugador") || "";
+    });
+
+    const guardarNombreJugador = (nombre) => {
+        localStorage.setItem("nombreJugador", nombre);
+        setNombreJugador(nombre);
+    };
     const [error, setError] = useState("");
-    const [bazaActual, setBazaActual] = useState([]);
-    const [resultadoBaza, setResultadoBaza] = useState(null);
+    const [rondaActual, setRondaActual] = useState([]);
+    const [resultadoRonda, setResultadoRonda] = useState(null);
     const [finPartida, setFinPartida] = useState(null);
 
-    const crearMesa = (nombre, nombreMesa) => {
-        setNombreJugador(nombre);
-        socket.emit("crear-mesa", nombre, nombreMesa);
-    };
-
-    const unirseMesa = (idMesa, nombre) => {
-        setNombreJugador(nombre);
-        setMesaId(idMesa); // Guardamos el ID por si acaso, aunque mesa actual deberia bastar
-        socket.emit("unirse-mesa", { idMesa, nombre });
-    };
-
-    const jugadorListo = () => {
-        if (mesa && mesa.id) {
-            socket.emit("jugador-listo", mesa.id);
+    // Registrar jugador: genera UUID, guarda datos, y reconecta con auth
+    const registrarJugador = (nombre) => {
+        // Generar nuevo UUID o usar existente
+        let odId = localStorage.getItem("odId");
+        if (!odId) {
+            odId = generarUUID();
+            localStorage.setItem("odId", odId);
         }
+
+        // Guardar nombre
+        localStorage.setItem("nombreJugador", nombre);
+
+        // Desconectar socket actual
+        socketRef.current.disconnect();
+
+        // Crear nuevo socket con auth
+        const nuevoSocket = io("http://localhost:3000", {
+            auth: { odId, nombre }
+        });
+
+        // Configurar listeners en el nuevo socket
+        configurarListeners(nuevoSocket);
+        socketRef.current = nuevoSocket;
     };
 
-    const descartarCartas = (indices) => {
-        if (mesa && mesa.id) {
-            socket.emit("descarte", { idMesa: mesa.id, indices });
-        }
-    };
-
-    const jugarCarta = (carta) => {
-        if (mesa && mesa.id) {
-            socket.emit("jugar", { idMesa: mesa.id, carta });
-        }
-    };
-
-    useEffect(() => {
-        socket.on("mesas-disponibles", (mesas) => {
+    // Función para configurar todos los listeners del socket
+    const configurarListeners = (sock) => {
+        sock.on("mesas-disponibles", (mesas) => {
             setMesas(mesas);
         });
 
-        socket.on("crear-mesa", (nuevaMesa) => {
+        sock.on("crear-mesa", (nuevaMesa) => {
             setMesa(nuevaMesa);
             setMesaId(nuevaMesa.id);
             setEstadoPantalla("mesa");
         });
 
-        socket.on("actualizar-mesa", (mesaActualizada) => {
+        sock.on("actualizar-mesa", (mesaActualizada) => {
             setMesa(mesaActualizada);
         });
 
-        socket.on("confirmacion-ingreso", (mesaIngresada) => {
+        sock.on("confirmacion-ingreso", (mesaIngresada) => {
             setMesa(mesaIngresada);
             setMesaId(mesaIngresada.id);
             setEstadoPantalla("mesa");
         });
 
-        socket.on("iniciar-partida", (mesaPartida) => {
+        sock.on("iniciar-partida", (mesaPartida) => {
             setMesa(mesaPartida);
-            setBazaActual([]);
+            setRondaActual([]);
             setEstadoPantalla("en-partida");
         });
 
-        socket.on("carta-jugada", ({ idJugador, carta }) => {
-            setBazaActual(prev => [...prev, { idJugador, carta }]);
+        sock.on("carta-jugada", ({ id, carta }) => {
+            setRondaActual(prev => [...prev, { id, carta }]);
         });
 
-        socket.on("baza-resuelta", ({ ganador, idGanador, cartaGanadora }) => {
-            setResultadoBaza({ ganador, idGanador, cartaGanadora });
+        sock.on("ronda-resuelta", ({ ganador, idGanador, cartaGanadora }) => {
+            setResultadoRonda({ ganador, idGanador, cartaGanadora });
             setTimeout(() => {
-                setBazaActual([]);
-                setResultadoBaza(null);
+                setRondaActual([]);
+                setResultadoRonda(null);
             }, 2000);
         });
 
-        socket.on("fase-descarte", (mesaActualizada) => {
+        sock.on("fase-descarte", (mesaActualizada) => {
             setMesa(mesaActualizada);
-            setBazaActual([]);
+            setRondaActual([]);
         });
 
-        socket.on("nueva-ronda", ({ ronda }) => {
-            setBazaActual([]);
+        sock.on("nueva-ronda", ({ ronda }) => {
+            setRondaActual([]);
         });
 
-        socket.on("fin-partida", ({ ganador, jugadores }) => {
+        sock.on("fin-partida", ({ ganador, jugadores }) => {
             setFinPartida({ ganador, jugadores });
             setEstadoPantalla("fin-partida");
         });
 
-        socket.on("error", (msg) => {
+        sock.on("error", (msg) => {
             setError(msg);
+            console.log("error recibido:", msg);
             alert(msg);
         });
 
+        sock.on("confirmacion-registro", (data) => {
+            if (data.ok) {
+                guardarNombreJugador(data.msg.nombre);
+            }
+        });
+
+        sock.on("error-registro", (msg) => {
+            setError(msg);
+            alert(msg);
+        });
+    };
+
+    const crearMesa = (nombre, nombreMesa) => {
+        setNombreJugador(nombre);
+        socketRef.current.emit("crear-mesa", nombre, nombreMesa);
+    };
+
+    const unirseMesa = (idMesa, nombreJugador) => {
+        setNombreJugador(nombreJugador);
+        setMesaId(idMesa);
+        socketRef.current.emit("unirse-mesa", { idMesa, nombreJugador });
+    };
+
+    const jugadorListo = () => {
+        if (mesa && mesa.id) {
+            socketRef.current.emit("jugador-listo", mesa.id);
+        }
+    };
+
+    const descartarCartas = (indices) => {
+        if (mesa && mesa.id) {
+            socketRef.current.emit("descarte", { idMesa: mesa.id, indices });
+        }
+    };
+
+    const jugarCarta = (carta) => {
+        if (mesa && mesa.id) {
+            socketRef.current.emit("jugar", { idMesa: mesa.id, carta });
+        }
+    };
+
+    useEffect(() => {
+        // Configurar listeners en el socket inicial
+        configurarListeners(socketRef.current);
+
         return () => {
-            socket.off("mesas-disponibles");
-            socket.off("crear-mesa");
-            socket.off("actualizar-mesa");
-            socket.off("confirmacion-ingreso");
-            socket.off("iniciar-partida");
-            socket.off("carta-jugada");
-            socket.off("baza-resuelta");
-            socket.off("fase-descarte");
-            socket.off("nueva-ronda");
-            socket.off("fin-partida");
-            socket.off("error");
+            socketRef.current.removeAllListeners();
         };
     }, []);
 
     return (
         <GlobalContext.Provider value={{
-            socket,
+            socket: socketRef.current,
             mesas,
             mesa,
             estadoPantalla,
@@ -129,14 +194,15 @@ export const GlobalContextProvider = (props) => {
             mesaId,
             setMesaId,
             nombreJugador,
-            setNombreJugador,
+            guardarNombreJugador,
+            registrarJugador,
             crearMesa,
             unirseMesa,
             jugadorListo,
             descartarCartas,
             jugarCarta,
-            bazaActual,
-            resultadoBaza,
+            rondaActual,
+            resultadoRonda,
             finPartida,
             setFinPartida,
             error

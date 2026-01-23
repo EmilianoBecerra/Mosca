@@ -21,7 +21,7 @@ class PartidaController {
         const mesa = this.mesas[idMesa];
         if (!mesa) return;
 
-        const jugador = mesa.jugadores.find(j => j.idJugador === socket.id);
+        const jugador = mesa.jugadores.find(j => j.id === socket.id);
         if (!jugador) return;
 
         if (mesa.estado === "descarte") {
@@ -33,7 +33,7 @@ class PartidaController {
             const todosDescartaron = mesa.jugadores.every(j => j.listoParaDescartar);
 
             if (todosDescartaron) {
-                const arrayJugadores = mesa.jugadores.map(j => ({ id: j.idJugador, indices: j.descarte || [] }));
+                const arrayJugadores = mesa.jugadores.map(j => ({ id: j.id, indices: j.descarte || [] }));
 
                 descartarCartas(mesa, arrayJugadores);
                 repartirPostDescarte(mesa);
@@ -60,7 +60,7 @@ class PartidaController {
         const numeroJugadores = mesa.jugadores.length;
         const turnoJugador = (mesa.repartidor + 1 + mesa.turnoActual) % numeroJugadores;
 
-        if (mesa.jugadores[turnoJugador].idJugador !== socket.id) return;
+        if (mesa.jugadores[turnoJugador].id !== socket.id) return;
 
         const jugador = mesa.jugadores[turnoJugador];
 
@@ -76,11 +76,11 @@ class PartidaController {
 
         /* Agregar carta a la mesa */
 
-        mesa.cartasPorRonda.push({ idJugador: socket.id, carta });
+        mesa.cartasPorRonda.push({ id: socket.id, carta });
 
         /* Notificar jugada a todos los jugadores en la mesa*/
 
-        this.io.to(idMesa).emit("carta-jugada", { idJugador: socket.id, carta });
+        this.io.to(idMesa).emit("carta-jugada", { id: socket.id, carta });
     }
 }
 
@@ -94,7 +94,7 @@ if (mesa.cartasPorRonda.length === numeroJugadores) {
     const cartaGanadora = determinarGanador(mesa.cartasPorRonda, mesa.triunfo);
 
     const jugadaGanadora = mesa.cartasPorRonda.find(j => j.carta.palo === cartaGanadora.palo && j.carta.numero === cartaGanadora.numero);
-    const ganador = mesa.jugadores.find(j => j.idJugador === jugadaGanadora.idJugador);
+    const ganador = mesa.jugadores.find(j => j.id === jugadaGanadora.id);
 
 
     ganador.rondasGanadas = (ganador.rondasGanadas || 0) + 1;

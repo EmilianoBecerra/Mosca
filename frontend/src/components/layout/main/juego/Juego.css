@@ -197,14 +197,14 @@
     margin: 0;
 }
 
-/* Baza Actual */
-.baza-actual {
+/* Ronda Actual */
+.ronda-actual {
     text-align: center;
     width: 100%;
     padding: 1rem;
 }
 
-.baza-actual h4 {
+.ronda-actual h4 {
     margin: 0 0 1rem 0;
     color: #a1a1aa;
     font-size: 0.9rem;
@@ -212,7 +212,7 @@
     letter-spacing: 1px;
 }
 
-.cartas-baza {
+.cartas-ronda {
     display: flex;
     justify-content: center;
     gap: 1.5rem;
@@ -226,7 +226,7 @@
     gap: 0.5rem;
 }
 
-.jugador-nombre-baza {
+.jugador-nombre-ronda {
     font-size: 0.75rem;
     color: #a1a1aa;
     background: rgba(0, 0, 0, 0.3);
@@ -234,8 +234,8 @@
     border-radius: 4px;
 }
 
-/* Resultado de baza */
-.resultado-baza {
+/* Resultado de ronda */
+.resultado-ronda {
     text-align: center;
     animation: fadeInScale 0.3s ease;
 }
@@ -251,7 +251,7 @@
     }
 }
 
-.resultado-baza-content {
+.resultado-ronda-content {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -268,7 +268,7 @@
     50% { transform: translateY(-15px); }
 }
 
-.resultado-baza h4 {
+.resultado-ronda h4 {
     margin: 0;
     font-size: 1.25rem;
     color: #fbbf24;

@@ -11,7 +11,7 @@ const ICONOS_PALO = {
 };
 
 export function Juego() {
-    const { mesa, nombreJugador, descartarCartas, jugarCarta, bazaActual, resultadoBaza } = useContext(GlobalContext);
+    const { mesa, nombreJugador, descartarCartas, jugarCarta, rondaActual, resultadoRonda } = useContext(GlobalContext);
     const [cartasSeleccionadas, setCartasSeleccionadas] = useState([]);
 
     if (!mesa) return null;
@@ -22,7 +22,7 @@ export function Juego() {
     const numeroJugadores = mesa.jugadores.length;
     const turnoIndex = (mesa.repartidor + 1 + mesa.turnoActual) % numeroJugadores;
     const jugadorEnTurno = mesa.jugadores[turnoIndex];
-    const esMiTurno = jugadorEnTurno?.idJugador === miJugador?.idJugador;
+    const esMiTurno = jugadorEnTurno?.id === miJugador?.id;
 
     const esDescarte = mesa.estado === "descarte";
     const esPartida = mesa.estado === "en-partida";
@@ -46,8 +46,8 @@ export function Juego() {
         jugarCarta(carta);
     };
 
-    const obtenerNombreJugador = (idJugador) => {
-        const jugador = mesa.jugadores.find(j => j.idJugador === idJugador);
+    const obtenerNombreJugador = (id) => {
+        const jugador = mesa.jugadores.find(j => j.id === id);
         return jugador?.nombre || "Jugador";
     };
 
@@ -72,10 +72,10 @@ export function Juego() {
             <div className="area-juego">
                 <div className="otros-jugadores">
                     {otrosJugadores.map((jugador) => {
-                        const esElTurno = jugador.idJugador === jugadorEnTurno?.idJugador;
+                        const esElTurno = jugador.id === jugadorEnTurno?.id;
                         return (
                             <div
-                                key={jugador.idJugador}
+                                key={jugador.id}
                                 className={`jugador-rival ${esElTurno ? 'turno-activo' : ''}`}
                             >
                                 <div className="avatar">
@@ -96,29 +96,29 @@ export function Juego() {
                 </div>
 
                 <div className="tablero-centro">
-                    {resultadoBaza ? (
-                        <div className="resultado-baza">
-                            <div className="resultado-baza-content">
+                    {resultadoRonda ? (
+                        <div className="resultado-ronda">
+                            <div className="resultado-ronda-content">
                                 <span className="resultado-icon">🏆</span>
-                                <h4>¡{resultadoBaza.ganador} gana la baza!</h4>
-                                {resultadoBaza.cartaGanadora && (
-                                    <div className={`carta-ganadora carta ${resultadoBaza.cartaGanadora.palo.toLowerCase()}`}>
-                                        <span className="numero">{resultadoBaza.cartaGanadora.numero}</span>
+                                <h4>¡{resultadoRonda.ganador} gana la ronda!</h4>
+                                {resultadoRonda.cartaGanadora && (
+                                    <div className={`carta-ganadora carta ${resultadoRonda.cartaGanadora.palo.toLowerCase()}`}>
+                                        <span className="numero">{resultadoRonda.cartaGanadora.numero}</span>
                                         <span className="palo-icon">
-                                            {ICONOS_PALO[resultadoBaza.cartaGanadora.palo.toLowerCase()]}
+                                            {ICONOS_PALO[resultadoRonda.cartaGanadora.palo.toLowerCase()]}
                                         </span>
                                     </div>
                                 )}
                             </div>
                         </div>
-                    ) : bazaActual.length > 0 ? (
-                        <div className="baza-actual">
-                            <h4>Baza Actual</h4>
-                            <div className="cartas-baza">
-                                {bazaActual.map((jugada, idx) => (
+                    ) : rondaActual.length > 0 ? (
+                        <div className="ronda-actual">
+                            <h4>Ronda Actual</h4>
+                            <div className="cartas-ronda">
+                                {rondaActual.map((jugada, idx) => (
                                     <div key={idx} className="carta-jugada-container">
-                                        <span className="jugador-nombre-baza">
-                                            {obtenerNombreJugador(jugada.idJugador)}
+                                        <span className="jugador-nombre-ronda">
+                                            {obtenerNombreJugador(jugada.id)}
                                         </span>
                                         <div className={`carta ${jugada.carta.palo.toLowerCase()}`}>
                                             <span className="numero">{jugada.carta.numero}</span>

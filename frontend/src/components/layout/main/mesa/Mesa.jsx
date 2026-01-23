@@ -6,6 +6,8 @@ import { Buttons } from "../../../parts/Buttons";
 export function Mesa() {
     const { mesa, nombreJugador, jugadorListo, setEstadoPantalla } = useContext(GlobalContext);
 
+    console.log("Mesa component - mesa:", mesa, "nombreJugador:", nombreJugador);
+
     const handleListo = () => {
         jugadorListo();
     };
@@ -34,7 +36,7 @@ export function Mesa() {
             <div className="mesa-header">
                 <div className="mesa-titulo">
                     <h2>{mesa.nombre}</h2>
-                    <span className="mesa-id">ID: {mesa.id?.slice(0, 8)}...</span>
+                    <span className="mesa-id">ID: {String(mesa.id).slice(0, 8)}...</span>
                 </div>
                 <div className={`estado-badge ${todosListos ? 'iniciando' : ''}`}>
                     {todosListos ? 'Iniciando partida...' : 'Esperando jugadores'}
@@ -58,7 +60,7 @@ export function Mesa() {
                     const esYo = jugador.nombre === nombreJugador;
                     return (
                         <div
-                            key={jugador.idJugador}
+                            key={jugador.id}
                             className={`jugador-slot ${esYo ? 'yo' : ''} ${jugador.ready ? 'listo' : ''}`}
                         >
                             <div className="jugador-avatar">

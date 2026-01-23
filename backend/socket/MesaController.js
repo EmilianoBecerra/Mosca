@@ -29,21 +29,31 @@ class MesaController {
         this.io.emit("mesas-disponibles", enviarMesasDisponibles(this.mesas));
     }
 
-    unirseMesa(socket, { idMesa, nombre }) {
-        const jugador = agregarNuevoUsuario(idMesa, nombre, this.mesas, socket.id);
+    unirseMesa(socket, { idMesa, nombreJugador }) {
+        const jugador = agregarNuevoUsuario(this.mesas, idMesa, nombreJugador, socket.id);
 
-        if (!jugador) {
-            socket.emit("error", "No se pudo unir a la mesa");
-            return;
+        if (!jugador.ok) {
+            if (jugador.error === "ya-en-otra-mesa") {
+                const mesaActual = this.mesas[jugador.mesaActual];
+                socket.join(jugador.mesaActual);
+                socket.emit("confirmacion-ingreso", mesaActual);
+                socket.emit("mesas-disponibles", enviarMesasDisponibles(this.mesas));
+                return;
+            } if (jugador.error === "ya-en-esta-mesa") {
+                const mesa = this.mesas[idMesa];
+                const jugadorExistente = mesa.jugadores.find(j => j.nombre === nombreJugador);
+                jugadorExistente.id = socket.id;
+                socket.join(idMesa);
+                socket.emit("confirmacion-ingreso", mesa);
+                this.io.to(idMesa).emit("actualizar-mesa", mesa);
+                return;
+            }
+
+            else {
+                socket.emit("error", jugador.error);
+                return;
+            }
         }
-
-        if (jugador === "jugador-en-la-mesa") {
-            this.io.to(idMesa).emit("actualizar-mesa", this.mesas[idMesa]);
-            socket.emit("confirmacion-ingreso", this.mesas[idMesa]);
-            this.io.emit("mesas-disponibles", enviarMesasDisponibles(this.mesas));
-            return;
-        }
-
         socket.join(idMesa);
         this.io.to(idMesa).emit("actualizar-mesa", this.mesas[idMesa]);
         socket.emit("confirmacion-ingreso", this.mesas[idMesa]);
@@ -52,7 +62,7 @@ class MesaController {
 
     jugadorListo(socket, idMesa) {
         const mesa = this.mesas[idMesa];
-        const jugador = mesa.jugadores.find(j => j.idJugador === socket.id);
+        const jugador = mesa.jugadores.find(j => j.id === socket.id);
         jugador.ready = true;
         const todosListos = mesa.jugadores.every(j => j.ready === true);
         if (todosListos && mesa.jugadores.length >= 2) {

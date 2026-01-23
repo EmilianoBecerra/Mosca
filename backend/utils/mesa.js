@@ -4,10 +4,17 @@ function crearMesa(idCreador, nombreCreador, nombreMesa) {
     const mesa = {
         id: idMesa,
         nombre: nombreMesa,
+        mazo: [],
+        triunfo: "",
+        estado: "esperando-jugadores",
+        fase: "esperando-jugadores-ready",
+        turnoActual: 0,
+        repartidor: 0,
         cartasPorRonda: [/* recibir {numero:1, palo: basto} */],
+        ronda: 0,
         jugadores: [
             {
-                idJugador: idCreador,
+                id: idCreador,
                 nombre: nombreCreador,
                 enPartida: true,
                 cartas: [],
@@ -17,14 +24,7 @@ function crearMesa(idCreador, nombreCreador, nombreMesa) {
                 listoParaSiguienteFase: false,
                 ready: false
             }
-        ],
-        mazo: [],
-        triunfo: "",
-        estado: "esperando-jugadores",
-        ronda: 0,
-        fase: "esperando-jugadores-ready",
-        turnoActual: 0,
-        repartidor: 0
+        ]
     }
 
     return mesa;
@@ -33,32 +33,36 @@ function crearMesa(idCreador, nombreCreador, nombreMesa) {
 function enviarMesasDisponibles(mesas) {
     const arrayMesas = Object.values(mesas);
     const arrayMesasDisponibles = arrayMesas.filter(m => m.jugadores.length < 6);
-    const infoMesas = []
-    for (const mesa of arrayMesasDisponibles) {
-        const id = mesa.id;
-        const nombreCreador = mesa.jugadores[0].nombre;
-        const jugadores = mesa.jugadores.length;
-        const nombre = mesa.nombre;
-        const info = { id, nombreCreador, jugadores, nombre };
-        infoMesas.push(info);
-    }
-
-    return infoMesas;
+    return arrayMesasDisponibles;
 }
 
-function agregarNuevoUsuario(idMesa, nombre, mesas, idJugador) {
+
+function agregarNuevoUsuario(mesas, idMesa, nombreJugador, idJugador) {
     const mesa = mesas[idMesa];
-    if (!mesa || mesa.jugadores.length >= 6) {
-        return null;
+    if (!mesa) {
+        return { ok: false, error: "mesa-no-existe" };
     }
-    const existe = mesa.jugadores.find(j => j.idJugador === idJugador || j.nombre === nombre);
-    if (existe) {
-        return "jugador-en-la-mesa";
+    if (mesa.jugadores.length >= 6) {
+        return { ok: false, error: "mesa-llena" };
+    }
+
+    const usuarioExisteEnMesa = mesa.jugadores.find(j => j.id === idJugador || j.nombre === nombreJugador);
+
+    if (usuarioExisteEnMesa) {
+        return { ok: false, error: "ya-en-esta-mesa" };
+    }
+
+    for (const [id, otraMesa] of Object.entries(mesas)) {
+        if (id === idMesa) continue;
+        const enOtraMesa = otraMesa.jugadores.find(j => j.id === idJugador || j.nombre === nombreJugador);
+        if (enOtraMesa) {
+            return { ok: false, error: "ya-en-otra-mesa", mesaActual: id };
+        }
     }
 
     const jugador = {
-        idJugador: idJugador,
-        nombre: nombre,
+        id: idJugador,
+        nombre: nombreJugador,
         enPartida: true,
         cartas: [],
         idMesa: idMesa,
@@ -69,7 +73,7 @@ function agregarNuevoUsuario(idMesa, nombre, mesas, idJugador) {
     };
 
     mesa.jugadores.push(jugador);
-    return jugador.nombre;
+    return { ok: true, jugador };
 }
 
 module.exports = { crearMesa, enviarMesasDisponibles, agregarNuevoUsuario }
