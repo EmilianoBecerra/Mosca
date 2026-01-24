@@ -1,19 +1,34 @@
+const { usuarioModel } = require("../model/usuariosModel");
 
 
 
-function crearJugador(nombre, id, jugadores) {
-    const arrayJugadores = Object.values(jugadores);
-    
-    if (arrayJugadores.length > 1) {
-        const existeJugador = arrayJugadores.find(j => j.nombre === nombre || j.id === id);
-        if (existeJugador) return { ok: false, msg: "Ya existe un jugador con ese nombre o ya estas registrado." };
+async function crearJugador(nombre, id) {
+    try {
+        if (id) {
+            let jugador = await usuarioModel.findById(id);
+
+            if (jugador) {
+                return { ok: true, msg: jugador, data: jugador };
+            }
+        }
+
+        const nombreTomado = await usuarioModel.findOne({ nombre });
+        if (nombreTomado) {
+            return { ok: false, msg: "Ya existe un jugador con ese nombre" };
+        }
+
+        jugador = await usuarioModel.create({ id, nombre, puntosGlobales: 0 })
+        return { ok: true, msg: "Jugador creado", data: jugador };
+    } catch (e) {
+        console.error(e);
+        return { ok: false, msg: "Error al registrar usuario en base de datos." }
     }
 
-    const jugador = { id, nombre };
-
-    return { ok: true, msg: jugador };
 }
 
 
 
 module.exports = crearJugador;
+
+
+

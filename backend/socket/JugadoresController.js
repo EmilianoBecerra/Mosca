@@ -8,28 +8,21 @@ class JugadoresController {
         this.jugadores = jugadores;
     }
 
-
     registrar(socket) {
-        socket.on("registrar-jugador", (nombre) => {
-            this.registrarJugador(socket, nombre);
+        socket.on("registrar-jugador", (nombre, id) => {
+            this.registrarJugador(socket, nombre, id);
         })
     }
 
 
-
-    registrarJugador(socket, nombre) {
-        const id = socket.odId;
-        const jugador = crearJugador(nombre, id, this.jugadores);
-        this.jugadores[id] = {
-            id,
-            nombre: jugador.msg.nombre
-        };
+    async registrarJugador(socket, nombre, id) {
+        const jugador = await crearJugador(nombre, id);
 
         if (!jugador.ok) {
             socket.emit("error-registro", jugador.msg);
             return;
         }
-        socket.emit("confirmacion-registro", jugador);
+        socket.emit("confirmacion-registro", jugador.data);
     }
 }
 

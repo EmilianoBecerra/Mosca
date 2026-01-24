@@ -3,28 +3,8 @@ import { io } from "socket.io-client";
 
 export const GlobalContext = createContext(null);
 
-// Función para generar UUID simple
-const generarUUID = () => {
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-        const r = Math.random() * 16 | 0;
-        const v = c === 'x' ? r : (r & 0x3 | 0x8);
-        return v.toString(16);
-    });
-};
-
-// Función para crear socket con o sin auth
+// Función para crear socket
 const crearSocket = () => {
-    const odId = localStorage.getItem("odId");
-    const nombre = localStorage.getItem("nombreJugador");
-
-    // Si tenemos datos guardados, conectamos con auth
-    if (odId && nombre) {
-        return io("http://localhost:3000", {
-            auth: { odId, nombre }
-        });
-    }
-
-    // Si no, conectamos sin auth
     return io("http://localhost:3000");
 };
 
@@ -49,29 +29,10 @@ export const GlobalContextProvider = (props) => {
     const [resultadoRonda, setResultadoRonda] = useState(null);
     const [finPartida, setFinPartida] = useState(null);
 
-    // Registrar jugador: genera UUID, guarda datos, y reconecta con auth
+    // Registrar jugador: emite evento al servidor para crear/obtener de MongoDB
     const registrarJugador = (nombre) => {
-        // Generar nuevo UUID o usar existente
-        let odId = localStorage.getItem("odId");
-        if (!odId) {
-            odId = generarUUID();
-            localStorage.setItem("odId", odId);
-        }
-
-        // Guardar nombre
-        localStorage.setItem("nombreJugador", nombre);
-
-        // Desconectar socket actual
-        socketRef.current.disconnect();
-
-        // Crear nuevo socket con auth
-        const nuevoSocket = io("http://localhost:3000", {
-            auth: { odId, nombre }
-        });
-
-        // Configurar listeners en el nuevo socket
-        configurarListeners(nuevoSocket);
-        socketRef.current = nuevoSocket;
+        const idGuardado = localStorage.getItem("odId") || null;
+        socketRef.current.emit("registrar-jugador", nombre, idGuardado);
     };
 
     // Función para configurar todos los listeners del socket
@@ -134,15 +95,21 @@ export const GlobalContextProvider = (props) => {
             alert(msg);
         });
 
-        sock.on("confirmacion-registro", (data) => {
-            if (data.ok) {
-                guardarNombreJugador(data.msg.nombre);
-            }
+        sock.on("confirmacion-registro", (jugador) => {
+            // jugador es el documento de MongoDB
+            localStorage.setItem("odId", jugador._id);
+            guardarNombreJugador(jugador.nombre);
         });
 
         sock.on("error-registro", (msg) => {
             setError(msg);
             alert(msg);
+            // Si hay error de base de datos, limpiar y volver al inicio
+            if (msg === "Error al registrar usuario en base de datos.") {
+                localStorage.removeItem("odId");
+                localStorage.removeItem("nombreJugador");
+                setNombreJugador("");
+            }
         });
     };
 
@@ -178,6 +145,13 @@ export const GlobalContextProvider = (props) => {
     useEffect(() => {
         // Configurar listeners en el socket inicial
         configurarListeners(socketRef.current);
+
+        // Si hay datos guardados, emitir evento para reconectar
+        const idGuardado = localStorage.getItem("odId");
+        const nombreGuardado = localStorage.getItem("nombreJugador");
+        if (idGuardado && nombreGuardado) {
+            socketRef.current.emit("registrar-jugador", nombreGuardado, idGuardado);
+        }
 
         return () => {
             socketRef.current.removeAllListeners();
